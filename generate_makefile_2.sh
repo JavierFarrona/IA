@@ -18,7 +18,7 @@ MAKEFILE_CONTENT="# Makefile generado automáticamente para múltiples archivos
 CXX = g++
 CXXFLAGS = -std=c++14 -Wall -g
 LDFLAGS =
-TARGET = Ejecutable  # Cambia el nombre del ejecutable según lo necesites
+TARGET = "$RUTA_DESTINO"  # Cambia el nombre del ejecutable según lo necesites
 
 # Todos los archivos .cc en el directorio actual
 SRC = \$(wildcard *.cpp)
