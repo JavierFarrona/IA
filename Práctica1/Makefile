@@ -4,7 +4,7 @@
 CXX = g++
 CXXFLAGS = -std=c++14 -Wall -g
 LDFLAGS =
-TARGET = programa  # Cambia el nombre del ejecutable según lo necesites
+TARGET = Ejecutable  # Cambia el nombre del ejecutable según lo necesites
 
 # Todos los archivos .cc en el directorio actual
 SRC = $(wildcard *.cpp)
