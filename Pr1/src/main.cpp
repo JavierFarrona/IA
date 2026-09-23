@@ -58,6 +58,57 @@ std::string formatearPosiciones(const std::set<Posicion>& posiciones) {
     return salida.str();
 }
 
+std::string simboloCasilla(const Mapa& mapa, const Posicion& posicion,
+                          const std::set<Posicion>& camino) {
+    const Posicion origen = mapa.getOrigen();
+    const Posicion destino = mapa.getDestino();
+    const Nodo& nodo = mapa.obtenerNodo(posicion);
+
+    if (posicion == origen) {
+        return "🤖";
+    }
+    if (posicion == destino) {
+        return "🏁";
+    }
+    if (nodo.getCoste() < 0) {
+        return "🟥";
+    }
+    if (camino.find(posicion) != camino.end()) {
+        return "🟩";
+    }
+
+    const int coste = nodo.getCoste();
+    if (coste <= 1) {
+        return "⬜";
+    }
+    if (coste <= 3) {
+        return "◽";
+    }
+    if (coste <= 5) {
+        return "◾";
+    }
+    if (coste <= 7) {
+        return "◼️";
+    }
+    return "⬛";
+}
+
+void imprimirMapaVisual(std::ostream& salida, const Mapa& mapa,
+                        const ResultadoBusqueda& resultado) {
+    salida << "\nMapa visual:\n";
+
+    for (int fila = 0; fila < mapa.getFilas(); ++fila) {
+        for (int columna = 0; columna < mapa.getColumnas(); ++columna) {
+            const Posicion posicion(fila, columna);
+            salida << simboloCasilla(mapa, posicion, std::set<Posicion>(
+                                                     resultado.camino.begin(),
+                                                     resultado.camino.end()))
+                   << ' ';
+        }
+        salida << '\n';
+    }
+}
+
 void escribirResultado(std::ostream& salida, const std::string& instancia,
                        const Mapa& mapa, const ResultadoBusqueda& resultado) {
     salida << "Instancia n m co cd\n";
@@ -79,24 +130,62 @@ void escribirResultado(std::ostream& salida, const std::string& instancia,
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::cerr << "Uso: " << argv[0]
-                  << " <mapa> [salida-mapa] [salida-resultados] [instancia]\n";
+                  << " <mapa> [salida-mapa] [salida-resultados] [instancia] [--step|--direct]\n";
         return 2;
     }
+
     try {
+        bool pasoAPaso = false;
+        std::vector<std::string> argumentosPosicionales;
+
+        for (int indice = 2; indice < argc; ++indice) {
+            const std::string argumento = argv[indice];
+            if (argumento == "--step" || argumento == "-s") {
+                pasoAPaso = true;
+            } else if (argumento == "--direct" || argumento == "-d") {
+                pasoAPaso = false;
+            } else {
+                argumentosPosicionales.push_back(argumento);
+            }
+        }
+
+        std::string salidaMapa;
+        std::string salidaResultados;
+        std::string instancia;
+
+        if (!argumentosPosicionales.empty()) {
+            salidaMapa = argumentosPosicionales[0];
+        }
+        if (argumentosPosicionales.size() >= 2) {
+            salidaResultados = argumentosPosicionales[1];
+        }
+        if (argumentosPosicionales.size() >= 3) {
+            instancia = argumentosPosicionales[2];
+        }
+
         Mapa mapa;
         mapa.cargarDesdeFichero(argv[1]);
         AEstrella algoritmo(mapa);
-        ResultadoBusqueda resultado = algoritmo.buscar();
-        std::string instancia = argc >= 5
-                                    ? argv[4]
-                                    : std::filesystem::path(argv[1]).stem().string();
-        std::string salidaMapa = argc >= 3 ? argv[2] : instancia + "_salida.txt";
-        std::string salidaResultados = argc >= 4 ? argv[3] : "resultados.txt";
+        ResultadoBusqueda resultado = algoritmo.buscar(pasoAPaso, pasoAPaso ? &std::cout : nullptr);
+
+        if (salidaMapa.empty()) {
+            instancia = instancia.empty() ? std::filesystem::path(argv[1]).stem().string() : instancia;
+            salidaMapa = instancia + "_salida.txt";
+        }
+        if (salidaResultados.empty()) {
+            salidaResultados = "resultados.txt";
+        }
+        if (instancia.empty()) {
+            instancia = std::filesystem::path(argv[1]).stem().string();
+        }
+
         mapa.guardarConCamino(salidaMapa);
         std::ofstream ficheroResultados(salidaResultados);
         if (!ficheroResultados) {
             throw std::runtime_error("No se pudo crear el fichero: " + salidaResultados);
         }
+
+        imprimirMapaVisual(std::cout, mapa, resultado);
         escribirResultado(std::cout, instancia, mapa, resultado);
         escribirResultado(ficheroResultados, instancia, mapa, resultado);
         return resultado.encontrado ? 0 : 1;
