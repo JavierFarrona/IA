@@ -1,3 +1,22 @@
+/**
+* Universidad de La Laguna
+* Escuela Superior de Ingeniería y Tecnología
+* Grado en Ingeniería Informática
+* Asignatura: Inteligencia Artificial
+* Curso: 3º
+* C:\Users\javie\Desktop\Práctica\IA\Pr1\src
+* Autor: Javier Farrona Cabrera
+* Correo: alu0101541983@ull.edu.es
+* Fecha 23 Sep 2026
+* Archivo: main.cpp
+* Referencias: 
+*     Enunciado de la práctica
+* Historial de revisiones
+*     20 Sep 2026 - Creación (primera versión) del código
+*     22 Sep 2026 - Union de todas las partes del proyecto y pruebas iniciales
+*     23 Sep 2026 - Documentacion del código
+*/
+
 #include "AEstrella.h"
 
 #include <exception>

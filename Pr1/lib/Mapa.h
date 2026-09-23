@@ -1,3 +1,22 @@
+/**
+* Universidad de La Laguna
+* Escuela Superior de Ingeniería y Tecnología
+* Grado en Ingeniería Informática
+* Asignatura: Inteligencia Artificial
+* Curso: 3º
+* C:\Users\javie\Desktop\Práctica\IA\Pr1\lib
+* Autor: Javier Farrona Cabrera
+* Correo: alu0101541983@ull.edu.es
+* Fecha 23 Sep 2026
+* Archivo: Mapa.h
+* Referencias: 
+*     Enunciado de la práctica
+* Historial de revisiones
+*     20 Sep 2026 - Creación (primera versión) del código
+*     22 Sep 2026 - Completa implementación de la clase Mapa y pruebas iniciales
+*     23 Sep 2026 - Documentacion del código
+*/
+
 #ifndef MAPA_H
 #define MAPA_H
 
@@ -6,33 +25,36 @@
 #include <string>
 #include <vector>
 
+// Representa el entorno sobre el que se ejecuta la búsqueda del robot.
+// Cada celda tiene un coste asociado, puede ser libre, obstáculo o punto de
+// origen/destino, y se utiliza para generar vecinos y guardar la solución.
 class Mapa {
-public:
-    // Crea un mapa vacío.
+ public:
+    // Crea un mapa vacío con dimensiones nulas.
     Mapa();
 
-    // Crea un mapa con el número indicado de filas y columnas.
+    // Crea un mapa rectangular con las dimensiones especificadas.
     Mapa(int filas, int columnas);
 
-    // Lee las celdas, el origen y el destino desde un fichero.
+    // Carga la estructura del mapa desde un fichero de texto.
     void cargarDesdeFichero(const std::string& nombreFichero);
 
-    // Guarda el mapa en un fichero marcando el camino con asteriscos.
+    // Guarda el mapa en disco y marca la ruta encontrada con asteriscos.
     void guardarConCamino(const std::string& nombreFichero) const;
 
-    // Comprueba si una posición está dentro de los límites del mapa.
+    // Comprueba si una posición pertenece al rango válido del mapa.
     bool esValida(const Posicion& posicion) const;
 
-    // Comprueba si una posición está dentro del mapa y no es obstáculo.
+    // Comprueba si una posición es válida y transitada por el robot.
     bool esTransitable(const Posicion& posicion) const;
 
     // Devuelve las posiciones vecinas transitables en las cuatro direcciones.
     std::vector<Posicion> obtenerVecinos(const Posicion& posicion) const;
 
-    // Devuelve una referencia constante al nodo de una posición.
+    // Devuelve la referencia constante al nodo asociado a una posición.
     const Nodo& obtenerNodo(const Posicion& posicion) const;
 
-    // Devuelve una referencia modificable al nodo de una posición.
+    // Devuelve la referencia modificable al nodo asociado a una posición.
     Nodo& obtenerNodo(const Posicion& posicion);
 
     // Devuelve el número de filas del mapa.
@@ -41,23 +63,23 @@ public:
     // Devuelve el número de columnas del mapa.
     int getColumnas() const;
 
-    // Devuelve la posición del origen del robot.
+    // Devuelve la posición inicial del robot.
     Posicion getOrigen() const;
 
-    // Devuelve la posición del destino del robot.
+    // Devuelve la posición objetivo del robot.
     Posicion getDestino() const;
 
-    // Marca como camino los nodos de la solución encontrada.
+    // Marca como parte del camino las posiciones indicadas en la solución.
     void marcarCamino(const std::vector<Posicion>& camino);
 
-private:
+ private:
     // Número de filas del entorno.
     int filas;
 
     // Número de columnas del entorno.
     int columnas;
 
-    // Matriz de nodos que representa todas las celdas del mapa.
+    // Matriz de nodos que representa cada celda del mapa.
     std::vector<std::vector<Nodo>> nodos;
 
     // Posición inicial del robot.
