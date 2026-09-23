@@ -28,6 +28,8 @@
 
 namespace {
 
+// Devuelve el símbolo gráfico asociado a cada celda para la visualización
+// didáctica del algoritmo.
 std::string simboloCasilla(const Mapa& mapa, const Posicion& posicion,
                           const std::set<Posicion>& camino) {
     const Posicion origen = mapa.getOrigen();
@@ -63,6 +65,8 @@ std::string simboloCasilla(const Mapa& mapa, const Posicion& posicion,
     return "⬛";
 }
 
+// Muestra el estado del mapa en un instante concreto del recorrido de A*.
+// Sirve para repasar la expansión de nodos y la evolución del camino.
 void imprimirMapaPaso(const Mapa& mapa, const std::set<Posicion>& camino,
                       std::ostream& salida) {
     salida << "\nMapa actual:\n";
@@ -75,6 +79,8 @@ void imprimirMapaPaso(const Mapa& mapa, const std::set<Posicion>& camino,
     }
 }
 
+// Pausa la ejecución para que el usuario pueda estudiar el estado actual del
+// algoritmo antes de continuar con el siguiente nodo expandidos.
 void esperarPaso() {
     std::cout << "Pulsa Intro para avanzar al siguiente paso..." << std::flush;
     std::cin.get();
@@ -140,7 +146,9 @@ std::vector<Posicion> AEstrella::reconstruirCamino(const Nodo* nodoFinal) const 
 }
 
 // Ejecuta la búsqueda A* completa sobre el mapa, actualizando la frontera,
-// revisando los vecinos y devolviendo la información del resultado.
+// revisando los vecinos y devolviendo la información del resultado. Cuando
+// pasoAPaso está activado, la función pausa la ejecución para inspeccionar el
+// estado actual del algoritmo y el mapa en cada expansión.
 ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida) {
     while (!abiertos.empty()) {
         abiertos.pop();

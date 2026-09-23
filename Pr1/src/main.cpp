@@ -28,6 +28,7 @@
 
 namespace {
 
+// Formatea una ruta como una secuencia de coordenadas (fila,columna).
 std::string formatearCamino(const std::vector<Posicion>& camino) {
     if (camino.empty()) {
         return "-";
@@ -42,6 +43,7 @@ std::string formatearCamino(const std::vector<Posicion>& camino) {
     return salida.str();
 }
 
+// Formatea un conjunto de posiciones para mostrarlo en la salida textual.
 std::string formatearPosiciones(const std::set<Posicion>& posiciones) {
     if (posiciones.empty()) {
         return "-";
@@ -58,6 +60,8 @@ std::string formatearPosiciones(const std::set<Posicion>& posiciones) {
     return salida.str();
 }
 
+// Asigna un símbolo visual a cada celda según el tipo de contenido:
+// robot, meta, obstáculo, camino o coste del terreno.
 std::string simboloCasilla(const Mapa& mapa, const Posicion& posicion,
                           const std::set<Posicion>& camino) {
     const Posicion origen = mapa.getOrigen();
@@ -93,6 +97,8 @@ std::string simboloCasilla(const Mapa& mapa, const Posicion& posicion,
     return "⬛";
 }
 
+// Dibuja el mapa completo con emojis y tonos de gris para que sea más fácil
+// visualizar la solución final y la distribución del problema.
 void imprimirMapaVisual(std::ostream& salida, const Mapa& mapa,
                         const ResultadoBusqueda& resultado) {
     salida << "\nMapa visual:\n";
@@ -109,6 +115,8 @@ void imprimirMapaVisual(std::ostream& salida, const Mapa& mapa,
     }
 }
 
+// Escribe el resumen textual del resultado con la instancia, el coste del camino
+// y los nodos generados/inspeccionados.
 void escribirResultado(std::ostream& salida, const std::string& instancia,
                        const Mapa& mapa, const ResultadoBusqueda& resultado) {
     salida << "Instancia n m co cd\n";
@@ -127,6 +135,8 @@ void escribirResultado(std::ostream& salida, const std::string& instancia,
 
 } // namespace
 
+// Punto de entrada del programa. Permite ejecutar la búsqueda en modo directo
+// o en modo paso a paso, según el parámetro indicado por la línea de comandos.
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::cerr << "Uso: " << argv[0]
