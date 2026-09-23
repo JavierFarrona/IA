@@ -23,6 +23,7 @@
 
 #include "Mapa.h"
 
+#include <iosfwd>
 #include <map>
 #include <queue>
 #include <set>
@@ -60,7 +61,9 @@ class AEstrella {
     explicit AEstrella(Mapa& mapa);
 
     // Ejecuta la búsqueda y devuelve el camino, el coste y el estado final.
-    ResultadoBusqueda buscar();
+    // Si se activa el modo paso a paso, se muestran las decisiones relevantes del
+    // algoritmo en la salida indicada.
+    ResultadoBusqueda buscar(bool pasoAPaso = false, std::ostream* salida = nullptr);
 
     // Calcula la heurística de Manhattan ponderada por el coste mínimo del mapa.
     int calcularHeuristica(const Posicion& posicion) const;
