@@ -93,6 +93,8 @@ void esperarPaso() {
 // la posición para fijar el orden en casos de empate.
 bool ComparadorNodos::operator()(const Nodo* izquierdo,
                                  const Nodo* derecho) const {
+    // El primer criterio representa f(n)=g(n)+h(n), es decir, el coste ya
+    // recorrido más la estimación restante hasta el objetivo.
     if (izquierdo->getCosteTotal() != derecho->getCosteTotal()) {
         return izquierdo->getCosteTotal() > derecho->getCosteTotal();
     }
@@ -112,17 +114,23 @@ int AEstrella::calcularHeuristica(const Posicion& posicion) const {
     const int distancia = std::abs(posicion.first - destino.first) +
                           std::abs(posicion.second - destino.second);
 
+    // Se usa Manhattan porque solo se permiten desplazamientos verticales y
+    // horizontales. Multiplicarla por el menor coste evita sobreestimar el
+    // coste de cualquier ruta posible.
     int costeMinimo = std::numeric_limits<int>::max();
 
     for (int fila = 0; fila < mapa.getFilas(); ++fila) {
         for (int columna = 0; columna < mapa.getColumnas(); ++columna) {
             const int coste = mapa.obtenerNodo({fila, columna}).getCoste();
 
+            // Obstáculos y origen no son costes de desplazamiento normales.
             if (coste == -1 || coste == 0) {
                 continue;
             }
 
             int costeValido = coste;
+            // El destino se almacena como 10, pero entrar en él cuesta 2,
+            // igual que establece el contrato del problema.
             if (costeValido == 10) {
                 costeValido = 2;
             }
@@ -138,6 +146,8 @@ int AEstrella::calcularHeuristica(const Posicion& posicion) const {
 // final hasta el origen.
 std::vector<Posicion> AEstrella::reconstruirCamino(const Nodo* nodoFinal) const {
     std::vector<Posicion> camino;
+    // Cada nodo conoce al anterior; se recorre hacia atrás y después se
+    // invierte la secuencia para devolverla desde el origen al destino.
     for (const Nodo* nodo = nodoFinal; nodo != nullptr; nodo = nodo->getPadre()) {
         camino.push_back(nodo->getPosicion());
     }
@@ -150,6 +160,8 @@ std::vector<Posicion> AEstrella::reconstruirCamino(const Nodo* nodoFinal) const 
 // pasoAPaso está activado, la función pausa la ejecución para inspeccionar el
 // estado actual del algoritmo y el mapa en cada expansión.
 ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida) {
+    // La instancia puede reutilizarse: se vacían las estructuras globales de
+    // esta búsqueda y se borran los datos temporales guardados en cada nodo.
     while (!abiertos.empty()) {
         abiertos.pop();
     }
@@ -168,6 +180,7 @@ ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida) {
     const Posicion destino = mapa.getDestino();
     Nodo& nodoOrigen = mapa.obtenerNodo(origen);
     nodoOrigen.actualizarCostes(0, calcularHeuristica(origen), nullptr);
+    // El origen tiene g=0, y su h inicial determina su prioridad en abiertos.
     mejoresCostes[origen] = 0;
     abiertos.push(&nodoOrigen);
     nodosGenerados.insert(origen);
@@ -179,6 +192,8 @@ ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida) {
     }
 
     while (!abiertos.empty()) {
+        // La cola proporciona el candidato con menor f. Puede contener una
+        // versión vieja si la misma posición fue mejorada posteriormente.
         Nodo* actual = abiertos.top();
         abiertos.pop();
         const Posicion posicionActual = actual->getPosicion();
@@ -195,6 +210,7 @@ ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida) {
         }
 
         nodosGenerados.erase(posicionActual);
+        // Al extraerlo pasa de abiertos a inspeccionados y ya puede expandirse.
         inspeccionados.insert(posicionActual);
         nodosInspeccionados.insert(posicionActual);
 
@@ -231,6 +247,8 @@ ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida) {
         }
 
         for (const Posicion& vecinoPosicion : mapa.obtenerVecinos(posicionActual)) {
+            // Solo se recorren vecinos válidos y transitables. El coste de
+            // movimiento es el de la celda de llegada, salvo el destino.
             Nodo& vecino = mapa.obtenerNodo(vecinoPosicion);
             const int costeMovimiento = vecinoPosicion == destino ? 2 : vecino.getCoste();
             const int nuevoCoste = actual->getCosteAcumulado() + costeMovimiento;
@@ -238,6 +256,8 @@ ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida) {
 
             if (costeConocido != mejoresCostes.end() &&
                 nuevoCoste >= costeConocido->second) {
+                // Una ruta que no mejora g(n) no debe sustituir al padre ni
+                // introducir otra copia útil en la frontera.
                 if (pasoAPaso && salida != nullptr) {
                     *salida << "  Vecino (" << vecinoPosicion.first << ","
                             << vecinoPosicion.second << ") descartado: coste mejor ya conocido\n";
@@ -249,6 +269,8 @@ ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida) {
             vecino.actualizarCostes(nuevoCoste,
                                     calcularHeuristica(vecinoPosicion), actual);
             abiertos.push(&vecino);
+            // Se vuelve a insertar aunque exista una copia anterior: la
+            // comprobación de coste obsoleto filtra esa copia al extraerla.
 
             if (pasoAPaso && salida != nullptr) {
                 *salida << "  Mejorado vecino (" << vecinoPosicion.first << ","
@@ -268,5 +290,6 @@ ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida) {
     }
 
     mapa.marcarCamino({});
+    // Si abiertos se agota, no existe ruta transitable desde el origen.
     return {{}, 0, nodosGenerados, nodosInspeccionados, false};
 }

@@ -50,6 +50,8 @@ bool Nodo::perteneceAlCamino() const { return esCamino; }
 // Actualiza los datos del nodo necesarios para la expansión de A*.
 void Nodo::actualizarCostes(int costeAcumuladoNuevo,
                             int costeHeuristicoNuevo, Nodo* padreNuevo) {
+    // El nuevo padre permite conservar la mejor ruta conocida para reconstruir
+    // el camino cuando este nodo sea elegido por A*.
     costeAcumulado = costeAcumuladoNuevo;
     costeHeuristico = costeHeuristicoNuevo;
     padre = padreNuevo;
@@ -60,6 +62,8 @@ void Nodo::marcarCamino(bool esCaminoNuevo) { esCamino = esCaminoNuevo; }
 
 // Reinicia los valores temporales del nodo antes de cada nueva ejecución.
 void Nodo::reiniciarBusqueda() {
+    // Se mantienen los datos estáticos de la celda y se limpian solo los datos
+    // derivados de una ejecución concreta del algoritmo.
     esCamino = false;
     costeAcumulado = 0;
     costeHeuristico = 0;

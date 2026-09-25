@@ -30,7 +30,8 @@ using Posicion = std::pair<int, int>;
 // los valores de la función A*.
 class Nodo {
  public:
-    // Crea un nodo en estado inicial con valores por defecto de búsqueda.
+   // Crea un nodo en estado inicial con valores por defecto de búsqueda.
+   // Su coste -1 lo deja en estado de obstáculo hasta que se configure.
     Nodo();
 
     // Crea un nodo con una posición concreta y el coste de acceso a esa celda.
@@ -54,7 +55,8 @@ class Nodo {
     // Devuelve la estimación del coste restante hasta el destino, h(n).
     int getCosteHeuristico() const;
 
-    // Devuelve el valor de evaluación total de la búsqueda, f(n) = g(n) + h(n).
+   // Devuelve el valor de evaluación total de la búsqueda, f(n) = g(n) + h(n).
+   // A* extrae primero el nodo cuyo valor f es menor.
     int getCosteTotal() const;
 
     // Devuelve el nodo padre usado para reconstruir el camino.
@@ -69,14 +71,15 @@ class Nodo {
     // Indica si la celda forma parte del camino solución actualmente marcado.
     bool perteneceAlCamino() const;
 
-    // Actualiza los valores de costes y enlaza el nodo con su padre.
+   // Actualiza los valores de costes y enlaza el nodo con su padre.
+   // El padre conserva la decisión que permitió obtener el mejor g(n).
     void actualizarCostes(int costeAcumulado, int costeHeuristico, Nodo* padre);
 
     // Marca o desmarca la celda como parte del camino final.
     void marcarCamino(bool esCamino);
 
-    // Restablece los datos temporales del nodo antes de iniciar una nueva
-    // búsqueda.
+   // Restablece los datos temporales del nodo antes de iniciar una nueva
+   // búsqueda, sin modificar su posición ni el coste del terreno.
     void reiniciarBusqueda();
 
  private:

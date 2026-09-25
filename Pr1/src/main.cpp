@@ -145,6 +145,8 @@ int main(int argc, char* argv[]) {
     }
 
     try {
+        // Los argumentos posicionales definen ficheros e identificador; las
+        // banderas solo seleccionan la modalidad de ejecución.
         bool pasoAPaso = false;
         std::vector<std::string> argumentosPosicionales;
 
@@ -173,11 +175,15 @@ int main(int argc, char* argv[]) {
             instancia = argumentosPosicionales[2];
         }
 
+        // La carga puede lanzar una excepción si el fichero no es válido; el
+        // bloque catch la convierte en un mensaje de error y código 2.
         Mapa mapa;
         mapa.cargarDesdeFichero(argv[1]);
         AEstrella algoritmo(mapa);
         ResultadoBusqueda resultado = algoritmo.buscar(pasoAPaso, pasoAPaso ? &std::cout : nullptr);
 
+        // Los nombres omitidos se derivan de la instancia para permitir una
+        // ejecución mínima indicando únicamente el mapa de entrada.
         if (salidaMapa.empty()) {
             instancia = instancia.empty() ? std::filesystem::path(argv[1]).stem().string() : instancia;
             salidaMapa = instancia + "_salida.txt";
@@ -189,6 +195,8 @@ int main(int argc, char* argv[]) {
             instancia = std::filesystem::path(argv[1]).stem().string();
         }
 
+        // La solución se persiste y se presenta tanto por consola como en el
+        // fichero de resultados, manteniendo el mismo resumen en ambos sitios.
         mapa.guardarConCamino(salidaMapa);
         std::ofstream ficheroResultados(salidaResultados);
         if (!ficheroResultados) {
