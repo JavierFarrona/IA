@@ -115,22 +115,32 @@ void imprimirMapaVisual(std::ostream& salida, const Mapa& mapa,
     }
 }
 
-// Escribe el resumen textual del resultado con la instancia, el coste del camino
-// y los nodos generados/inspeccionados.
-void escribirResultado(std::ostream& salida, const std::string& instancia,
-                       const Mapa& mapa, const ResultadoBusqueda& resultado) {
-    salida << "Instancia n m co cd\n";
+// Genera el resumen textual del resultado con el formato canónico del
+// proyecto para que tanto la consola como el fichero de resultados compartan
+// exactamente la misma salida.
+std::string generarResumenResultado(const std::string& instancia,
+                                  const Mapa& mapa,
+                                  const ResultadoBusqueda& resultado) {
+    std::ostringstream buffer;
+    buffer << "Instancia n m co cd\n";
     const Posicion origen = mapa.getOrigen();
     const Posicion destino = mapa.getDestino();
-    salida << instancia << ' ' << mapa.getFilas() << ' ' << mapa.getColumnas()
-        << " co: (" << origen.first << ',' << origen.second << ")"
-        << " cd: (" << destino.first << ',' << destino.second << ")\n";
-    salida << "Camino " << formatearCamino(resultado.camino) << '\n';
-    salida << "Coste " << resultado.coste << '\n';
-    salida << "Nodos generados " << formatearPosiciones(resultado.nodosGenerados)
+    buffer << instancia << ' ' << mapa.getFilas() << ' ' << mapa.getColumnas()
+           << " co: (" << origen.first << ',' << origen.second << ")"
+           << " cd: (" << destino.first << ',' << destino.second << ")\n";
+    buffer << "Camino " << formatearCamino(resultado.camino) << '\n';
+    buffer << "Coste " << resultado.coste << '\n';
+    buffer << "Nodos generados " << formatearPosiciones(resultado.nodosGenerados)
            << '\n';
-    salida << "Nodos inspeccionados "
+    buffer << "Nodos inspeccionados "
            << formatearPosiciones(resultado.nodosInspeccionados) << '\n';
+    return buffer.str();
+}
+
+// Escribe el resumen textual del resultado con una salida estable y reproducible.
+void escribirResultado(std::ostream& salida, const std::string& instancia,
+                       const Mapa& mapa, const ResultadoBusqueda& resultado) {
+    salida << generarResumenResultado(instancia, mapa, resultado);
 }
 
 } // namespace
@@ -179,8 +189,6 @@ int main(int argc, char* argv[]) {
         // bloque catch la convierte en un mensaje de error y código 2.
         Mapa mapa;
         mapa.cargarDesdeFichero(argv[1]);
-        AEstrella algoritmo(mapa);
-        ResultadoBusqueda resultado = algoritmo.buscar(pasoAPaso, pasoAPaso ? &std::cout : nullptr);
 
         // Los nombres omitidos se derivan de la instancia para permitir una
         // ejecución mínima indicando únicamente el mapa de entrada.
@@ -195,17 +203,34 @@ int main(int argc, char* argv[]) {
             instancia = std::filesystem::path(argv[1]).stem().string();
         }
 
-        // La solución se persiste y se presenta tanto por consola como en el
-        // fichero de resultados, manteniendo el mismo resumen en ambos sitios.
-        mapa.guardarConCamino(salidaMapa);
+        // La solución se presenta tanto por consola como en el fichero de
+        // resultados. En modo paso a paso se escribe la traza de iteraciones
+        // al fichero y a la consola; en modo normal se usa el resumen clásico.
         std::ofstream ficheroResultados(salidaResultados);
         if (!ficheroResultados) {
             throw std::runtime_error("No se pudo crear el fichero: " + salidaResultados);
         }
 
+        AEstrella algoritmo(mapa);
+        std::ostringstream traza;
+
+        if (pasoAPaso) {
+            ResultadoBusqueda resultado = algoritmo.buscar(true, &std::cout, true);
+            AEstrella algoritmoArchivo(mapa);
+            algoritmoArchivo.buscar(true, &traza, false);
+            mapa.guardarConCamino(salidaMapa);
+            ficheroResultados << traza.str();
+            return resultado.encontrado ? 0 : 1;
+        }
+
+        ResultadoBusqueda resultado = algoritmo.buscar(false, nullptr);
+        AEstrella algoritmoArchivo(mapa);
+        algoritmoArchivo.buscar(true, &traza, false);
+        mapa.guardarConCamino(salidaMapa);
+        ficheroResultados << traza.str();
+
         imprimirMapaVisual(std::cout, mapa, resultado);
         escribirResultado(std::cout, instancia, mapa, resultado);
-        escribirResultado(ficheroResultados, instancia, mapa, resultado);
         return resultado.encontrado ? 0 : 1;
     } catch (const std::exception& excepcion) {
         std::cerr << "Error: " << excepcion.what() << '\n';
