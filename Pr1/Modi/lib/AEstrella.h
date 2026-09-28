@@ -64,8 +64,10 @@ class AEstrella {
 
     // Ejecuta la búsqueda y devuelve el camino, el coste y el estado final.
     // Si se activa el modo paso a paso, se muestran las decisiones relevantes del
-    // algoritmo en la salida indicada.
-    ResultadoBusqueda buscar(bool pasoAPaso = false, std::ostream* salida = nullptr);
+    // algoritmo en la salida indicada. El parámetro mostrarMapa controla si se
+    // incluye también la visualización del mapa del paso a paso.
+    ResultadoBusqueda buscar(bool pasoAPaso = false, std::ostream* salida = nullptr,
+                            bool mostrarMapa = true);
 
     // Calcula la heurística de Manhattan ponderada por el coste mínimo del mapa.
     // La distancia Manhattan supone movimientos ortogonales, sin diagonales.

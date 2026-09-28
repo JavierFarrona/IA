@@ -65,8 +65,37 @@ std::string simboloCasilla(const Mapa& mapa, const Posicion& posicion,
     return "⬛";
 }
 
-// Muestra el estado del mapa en un instante concreto del recorrido de A*.
-// Sirve para repasar la expansión de nodos y la evolución del camino.
+// Formatea un conjunto de posiciones para imprimirlo como una lista de
+// coordenadas del tipo (fila,columna) separadas por comas.
+std::string formatearConjunto(const std::set<Posicion>& posiciones) {
+    if (posiciones.empty()) {
+        return "";
+    }
+
+    std::ostringstream salida;
+    bool primera = true;
+    for (const Posicion& posicion : posiciones) {
+        if (!primera) {
+            salida << ", ";
+        }
+        salida << '(' << posicion.first << ',' << posicion.second << ')';
+        primera = false;
+    }
+    return salida.str();
+}
+
+// Muestra el estado actual de la frontera y los nodos ya cerrados.
+void imprimirEstadoIteracion(int iteracion, const std::set<Posicion>& abiertos,
+                            const std::set<Posicion>& cerrados,
+                            std::ostream& salida) {
+    salida << "Iteración " << iteracion << '\n';
+    salida << "-----------\n";
+    salida << "Abiertos = " << formatearConjunto(abiertos) << '\n';
+    salida << "Cerrados = " << formatearConjunto(cerrados) << '\n';
+    salida << "------------------------\n";
+}
+
+// Muestra el mapa con los colores/símbolos del algoritmo para el paso a paso.
 void imprimirMapaPaso(const Mapa& mapa, const std::set<Posicion>& camino,
                       std::ostream& salida) {
     salida << "\nMapa actual:\n";
@@ -79,9 +108,11 @@ void imprimirMapaPaso(const Mapa& mapa, const std::set<Posicion>& camino,
     }
 }
 
-// Pausa la ejecución para que el usuario pueda estudiar el estado actual del
-// algoritmo antes de continuar con el siguiente nodo expandidos.
-void esperarPaso() {
+// Pausa la ejecución solo para la consola interactiva del modo paso a paso.
+void esperarPaso(std::ostream* salida) {
+    if (salida == nullptr || salida != &std::cout) {
+        return;
+    }
     std::cout << "Pulsa Intro para avanzar al siguiente paso..." << std::flush;
     std::cin.get();
     std::cout << '\n';
@@ -159,7 +190,8 @@ std::vector<Posicion> AEstrella::reconstruirCamino(const Nodo* nodoFinal) const 
 // revisando los vecinos y devolviendo la información del resultado. Cuando
 // pasoAPaso está activado, la función pausa la ejecución para inspeccionar el
 // estado actual del algoritmo y el mapa en cada expansión.
-ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida) {
+ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida,
+                                   bool mostrarMapa) {
     // La instancia puede reutilizarse: se vacían las estructuras globales de
     // esta búsqueda y se borran los datos temporales guardados en cada nodo.
     while (!abiertos.empty()) {
@@ -185,10 +217,9 @@ ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida) {
     abiertos.push(&nodoOrigen);
     nodosGenerados.insert(origen);
 
+    int iteracion = 0;
     if (pasoAPaso && salida != nullptr) {
-        *salida << "\nModo paso a paso: A*\n";
-        *salida << "Origen: (" << origen.first << "," << origen.second << ") | "
-                << "Destino: (" << destino.first << "," << destino.second << ")\n";
+        imprimirEstadoIteracion(iteracion, nodosGenerados, nodosInspeccionados, *salida);
     }
 
     while (!abiertos.empty()) {
@@ -202,10 +233,6 @@ ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida) {
         if (mejor == mejoresCostes.end() ||
             actual->getCosteAcumulado() != mejor->second ||
             inspeccionados.find(posicionActual) != inspeccionados.end()) {
-            if (pasoAPaso && salida != nullptr) {
-                *salida << "Descartado: (" << posicionActual.first << ","
-                        << posicionActual.second << ") por coste obsoleto o ya visitado\n";
-            }
             continue;
         }
 
@@ -215,24 +242,25 @@ ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida) {
         nodosInspeccionados.insert(posicionActual);
 
         if (pasoAPaso && salida != nullptr) {
-            *salida << "Expandiendo: (" << posicionActual.first << ","
-                    << posicionActual.second << ") | g="
-                    << actual->getCosteAcumulado() << " | h="
-                    << actual->getCosteHeuristico() << " | f="
-                    << actual->getCosteTotal() << '\n';
-            std::set<Posicion> caminoActual;
-            for (const auto& posicion : nodosInspeccionados) {
-                caminoActual.insert(posicion);
+            ++iteracion;
+            imprimirEstadoIteracion(iteracion, nodosGenerados, nodosInspeccionados, *salida);
+            if (mostrarMapa) {
+                std::set<Posicion> caminoActual;
+                for (const auto& posicion : nodosInspeccionados) {
+                    caminoActual.insert(posicion);
+                }
+                imprimirMapaPaso(mapa, caminoActual, *salida);
             }
-            imprimirMapaPaso(mapa, caminoActual, *salida);
-            esperarPaso();
+            if (salida == &std::cout) {
+                esperarPaso(salida);
+            }
         }
 
         if (posicionActual == destino) {
             std::vector<Posicion> camino = reconstruirCamino(actual);
             mapa.marcarCamino(camino);
             if (pasoAPaso && salida != nullptr) {
-                *salida << "Objetivo alcanzado. Ruta encontrada: ";
+                *salida << "Camino: ";
                 for (std::size_t indice = 0; indice < camino.size(); ++indice) {
                     if (indice > 0) {
                         *salida << " -> ";
@@ -241,6 +269,7 @@ ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida) {
                             << camino[indice].second << ")";
                 }
                 *salida << '\n';
+                *salida << "Coste: " << actual->getCosteAcumulado() << '\n';
             }
             return {camino, actual->getCosteAcumulado(), nodosGenerados,
                     nodosInspeccionados, true};
@@ -258,10 +287,6 @@ ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida) {
                 nuevoCoste >= costeConocido->second) {
                 // Una ruta que no mejora g(n) no debe sustituir al padre ni
                 // introducir otra copia útil en la frontera.
-                if (pasoAPaso && salida != nullptr) {
-                    *salida << "  Vecino (" << vecinoPosicion.first << ","
-                            << vecinoPosicion.second << ") descartado: coste mejor ya conocido\n";
-                }
                 continue;
             }
 
@@ -271,13 +296,6 @@ ResultadoBusqueda AEstrella::buscar(bool pasoAPaso, std::ostream* salida) {
             abiertos.push(&vecino);
             // Se vuelve a insertar aunque exista una copia anterior: la
             // comprobación de coste obsoleto filtra esa copia al extraerla.
-
-            if (pasoAPaso && salida != nullptr) {
-                *salida << "  Mejorado vecino (" << vecinoPosicion.first << ","
-                        << vecinoPosicion.second << ") con g=" << nuevoCoste
-                        << " y h=" << calcularHeuristica(vecinoPosicion)
-                        << "\n";
-            }
 
             if (inspeccionados.find(vecinoPosicion) == inspeccionados.end()) {
                 nodosGenerados.insert(vecinoPosicion);
